@@ -127,7 +127,7 @@ int insert_char(buffer_t* b, int line, int pos, char new_c){
 	if (l->len >= l->buf_len){
 		l->chars = (char*)realloc(l->chars, l->buf_len * 2 * sizeof(char));
 		l->buf_len *= 2;
-		if (l->chars = 0) return 3;
+		if (l->chars == 0) return 3;
 	}
 	for (int i = l->len - 1; i > pos; i--){
 		l->chars[i] = l->chars[i - 1];
