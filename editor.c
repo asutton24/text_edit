@@ -34,10 +34,30 @@ int editor_insert(editor_t* e, char new_c){
 	if (new_c == '\n'){
 		e->cur_x = 0;
 		e->cur_y++;
-		if (e->cur_y >= e->scroll_y + e->screen_y) e->scroll_y++;
+		if (e->cur_y >= e->scroll_y + e->screen_y - 1) e->scroll_y++;
 	} else {
 		e->cur_x++;
 	}
+	return 0;
+}
+
+int editor_delete(editor_t* e){
+	line_t* l;
+	int nx, ny;
+	int status;
+	if (status = get_line(e->buffer, e->cur_y, &l)) return status;
+	if ((e->cur_x == 0 || (e->cur_x == 1 && l->chars[0] == '\n')) && l->prev != 0){
+		ny = e->cur_y - 1;
+		nx = l->prev->len - 1;
+	} else {
+		nx = e->cur_x - !(l->prev == 0 && e->cur_x == 0);
+		ny = e->cur_y;
+	}
+	status = delete_char(e->buffer, e->cur_y, e->cur_x);
+	if (status) return status;
+	e->cur_x = nx;
+	e->cur_y = ny;
+	if (ny < e->scroll_y) e->scroll_y--;
 	return 0;
 }
 

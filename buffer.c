@@ -16,7 +16,7 @@ static int max(int x, int y){
 
 int get_line(buffer_t* b, int line_num, line_t** ret){
 	line_t* cur;
-	if (line_num > b->len) return 1;
+	if (line_num > b->len) return 2;
 	if (b->last_access == 0){
 		goto TRAVERSE_FROM_START;
 	}
@@ -25,12 +25,12 @@ int get_line(buffer_t* b, int line_num, line_t** ret){
 		if (b->la_line_num - line_num < 0){
 			for (int i = b->la_line_num; i < line_num; i++){
 				 cur = cur->next;
-				 if (cur == 0) return 1;
+				 if (cur == 0) return 3;
 			}
 		} else {
-			for (int i = b->la_line_num; i > line_num; i++){
+			for (int i = b->la_line_num; i > line_num; i--){
 				cur = cur->prev;
-				if (cur == 0) return 1;
+				if (cur == 0) return 4;
 			}
 		}
 		b->last_access = cur;
@@ -135,3 +135,41 @@ int insert_char(buffer_t* b, int line, int pos, char new_c){
 	l->chars[pos] = new_c;
 	return 0;
 }
+
+static int join_lines(buffer_t* b, line_t* l){
+	if (l->prev == 0) return 0;
+	line_t* p = l->prev;
+	p->next = l->next;
+	if (p->buf_len <= l->len + p->len){
+		p->chars = (char*)realloc(p->chars, powof2(l->len + p->len) * sizeof(char));
+		p->buf_len = powof2(l->len + p->len);
+		if (l->chars == 0) return 3;
+	}
+	for (int i = p->len - 1; i < l->len + p->len - 1; i++){
+		p->chars[i] = l->chars[i - p->len - 1];
+	}
+	p->len += l->len - 1;
+	l->next = 0;
+	b->len--;
+	free_lines(l);
+	return 0;
+}
+
+int delete_char(buffer_t* b, int line, int pos){
+	if (b == 0) return 1;
+	line_t* l;
+	if (get_line(b, line, &l) || pos > l->len) return 2;
+	if (l->len == 0 || (l->len == 1 && l->chars[0] == '\n')){
+		l->prev->next = l->next;
+		l->next = 0;
+		free_lines(l);
+		b->len--;
+		return 0;
+	}
+	pos--;
+	if (pos == -1) return join_lines(b, l);
+	for (int i = pos; i < l->len; i++) l->chars[i] = l->chars[i + 1];
+	l->len--;
+	return 0;
+}
+

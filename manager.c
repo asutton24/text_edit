@@ -8,6 +8,10 @@ int screen_map[16];
 int active_editor;
 int total_editors;
 
+static char char_translate(char c){
+	if (c == '\t' || c == '\n') return ' ';
+	return c;
+}
 static int find_new_line(char* s){
 	int len = 0;
 	while (*s != '\n' && *s != 0){
@@ -22,7 +26,6 @@ int init_manager(char* file_name){
 	active_editor = 0;
 	total_editors = 1;
 	initscr();
-	raw();
 	cbreak();
 	scrollok(stdscr, FALSE);
 	curs_set(0);
@@ -83,10 +86,10 @@ int draw_editor(int index){
 		for (int j = e->scroll_x; (j < find_new_line(l->chars)) && (j < e->screen_x); j++){
 			if (i == e->cur_y + 1 && j == e->cur_x){
 				attron(A_REVERSE);
-				printw("%c", l->chars[j]);
+				printw("%c", char_translate(l->chars[j]));
 				attroff(A_REVERSE);
 			} else {
-				printw("%c", l->chars[j]);
+				printw("%c", char_translate(l->chars[j]));
 			}
 		}	
 		for (int j = find_new_line(l->chars); j < e->screen_x; j++){
@@ -107,4 +110,8 @@ int draw_editor(int index){
 
 int insert_into_active_editor(char new_c){
 	return editor_insert(editors[active_editor], new_c);
+}
+
+int delete_from_active_editor(void){
+	return editor_delete(editors[active_editor]);
 }

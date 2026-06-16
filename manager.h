@@ -7,5 +7,6 @@ int init_manager(char* file_name);
 int close_manager(void);
 int draw_editor(int index);
 int insert_into_active_editor(char new_c);
+int delete_from_active_editor(void);
 
 #endif 
