@@ -9,7 +9,8 @@ int active_editor;
 int total_editors;
 
 static char char_translate(char c){
-	if (c == '\t' || c == '\n') return ' ';
+	if (c == '\t' || c == '\n') return 'T';
+	if (c == ' ') return 'S';
 	return c;
 }
 static int find_new_line(char* s){

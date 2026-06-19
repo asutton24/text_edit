@@ -112,6 +112,7 @@ static int insert_newline(buffer_t* b, line_t* l, int pos){
 		l->next->chars[i - pos] = l->chars[i];
 	}
 	l->chars[pos] = '\n';
+	l->len = pos + 1;
 	l->next->prev = l;
 	l->next->next = old_next;
 	b->len++;
@@ -143,10 +144,10 @@ static int join_lines(buffer_t* b, line_t* l){
 	if (p->buf_len <= l->len + p->len){
 		p->chars = (char*)realloc(p->chars, powof2(l->len + p->len) * sizeof(char));
 		p->buf_len = powof2(l->len + p->len);
-		if (l->chars == 0) return 3;
+		if (l->chars == 0) return 1;
 	}
 	for (int i = p->len - 1; i < l->len + p->len - 1; i++){
-		p->chars[i] = l->chars[i - p->len - 1];
+		p->chars[i] = l->chars[i - p->len + 1];
 	}
 	p->len += l->len - 1;
 	l->next = 0;
