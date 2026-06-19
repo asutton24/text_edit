@@ -83,7 +83,7 @@ int draw_editor(int index){
 			rel_y++;
 			continue;
 		}
-		for (int j = e->scroll_x; (j < find_new_line(l->chars)) && (j < e->screen_x); j++){
+		for (int j = e->scroll_x; (j < find_new_line(l->chars)) && (j < e->scroll_x + e->screen_x); j++){
 			if (i == e->cur_y + 1 && j == e->cur_x){
 				attron(A_REVERSE);
 				printw("%c", char_translate(l->chars[j]));
@@ -92,7 +92,7 @@ int draw_editor(int index){
 				printw("%c", char_translate(l->chars[j]));
 			}
 		}	
-		for (int j = find_new_line(l->chars); j < e->screen_x; j++){
+		for (int j = find_new_line(l->chars); j < e->screen_x + e->scroll_x; j++){
 			if (i == e->cur_y + 1 && j == e->cur_x){
 				attron(A_REVERSE);
 				printw(" ");
@@ -114,4 +114,31 @@ int insert_into_active_editor(char new_c){
 
 int delete_from_active_editor(void){
 	return editor_delete(editors[active_editor]);
+}
+
+int active_editor_left(void){
+	return editor_left(editors[active_editor]);
+}
+
+int active_editor_right(void){
+	return editor_right(editors[active_editor]);
+}
+
+int active_editor_up(void){
+	return editor_up(editors[active_editor]);
+}
+
+int active_editor_down(void){
+	return editor_down(editors[active_editor]);
+}
+
+int handle_keypress(int press){
+	int status;
+	if (press == KEY_BACKSPACE) status = delete_from_active_editor();
+	else if (press == KEY_LEFT) status = active_editor_left();
+	else if (press == KEY_RIGHT) status = active_editor_right();
+	else if (press == KEY_UP) status = active_editor_up();
+	else if (press == KEY_DOWN) status = active_editor_down();
+	else if (press < 256) status = insert_into_active_editor((char)press);
+	return status;
 }

@@ -37,6 +37,7 @@ int editor_insert(editor_t* e, char new_c){
 		if (e->cur_y >= e->scroll_y + e->screen_y - 1) e->scroll_y++;
 	} else {
 		e->cur_x++;
+		if (e->cur_x >= e->scroll_x + e->screen_x) e->scroll_x++;
 	}
 	return 0;
 }
@@ -64,5 +65,45 @@ int editor_delete(editor_t* e){
 int free_editor(editor_t* e){
 	free_buffer(e->buffer);
 	free(e);
+	return 0;
+}
+
+int editor_left(editor_t* e){
+	if (e->cur_x == 0) return 0;
+	e->cur_x--;
+	if (e->cur_x <= e->scroll_x) e->scroll_x --;
+	return 0;
+}
+
+int editor_right(editor_t* e){
+	line_t* l;
+	int status = get_line(e->buffer, e->cur_y, &l);
+	if (e->cur_x == l->len - 1) return 0;
+	e->cur_x++;
+	if (e->cur_x >= e->scroll_x + e->screen_x) e->scroll_x++;
+	return 0;
+}
+
+int editor_up(editor_t* e){
+	if (e->cur_y == 1) return 0;
+	e->cur_y--;
+	if (e->cur_y < e->scroll_y) e->scroll_y--;
+	line_t* l;
+	int status = get_line(e->buffer, e->cur_y, &l);
+	if (e->cur_x > l->len - 1){
+		e->cur_x = l->len - 1;
+	}
+	return 0;
+}
+
+int editor_down(editor_t* e){
+	if (e->cur_y == e->buffer->len) return 0;
+	e->cur_y++;
+	if (e->cur_y >= e->scroll_y + e->screen_y - 1) e->scroll_y++;
+	line_t* l;
+	int status = get_line(e->buffer, e->cur_y, &l);
+	if (e->cur_x > l->len - 1){
+		e->cur_x = l->len - 1;
+	}
 	return 0;
 } 

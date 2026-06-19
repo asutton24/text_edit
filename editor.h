@@ -23,5 +23,9 @@ int new_blank_editor(editor_t** ep, int screen_x, int screen_y, int pos_x, int p
 int editor_insert(editor_t* e, char new_c);
 int editor_delete(editor_t* e);
 int free_editor(editor_t* e);
+int editor_left(editor_t* e);
+int editor_right(editor_t* e);
+int editor_up(editor_t* e);
+int editor_down(editor_t* e);
 
 #endif

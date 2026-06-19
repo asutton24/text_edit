@@ -9,8 +9,7 @@ int main(int argc, char** argv){
 	while (pressed != 'q'){
 		draw_editor(0);
 		pressed = getch();
-		if (pressed == KEY_BACKSPACE) status = delete_from_active_editor();
-		else status = insert_into_active_editor(pressed);
+		status = handle_keypress(pressed);
 		if (status) break;
 	}
 	close_manager();
