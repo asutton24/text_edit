@@ -225,3 +225,67 @@ int stream_to_buffer(buffer_t* b, char* s, char* endings){
 	l->len = li + 1;
 	return 0;
 }
+
+int buffer_to_stream(buffer_t* b, char** sp, char endings, int* len){
+	line_t* l;
+	char* s = (char*)malloc(1024 * sizeof(char));
+	char* c;
+	int string_len = 1024;
+	l = b->first;
+	int i = 0;
+	int li = 0;
+	while (l){
+		c = l->chars;
+		while (c[li] != '\n' && li < l->len){
+			if (c[li] == '\t'){
+				s[i] = '\t';
+				i++;
+				if (i >= string_len){
+					s = (char*)realloc(s, string_len * 2 * sizeof(char));
+					string_len *= 2;
+					if (s == 0) return 1;
+				}
+				li++;
+				while (c[li] == '\t' && li % 8 != 0) li++;
+			} else {
+				s[i] = c[li];
+				i++;
+				if (i >= string_len){
+					s = (char*)realloc(s, string_len * 2 * sizeof(char));
+					string_len *= 2;
+					if (s == 0) return 1;
+				}
+				li++;
+			}
+		}
+		if (c[li] == '\n'){
+			if (endings == 'w'){
+				s[i] = '\r';
+				i++;
+				if (i >= string_len){
+					s = (char*)realloc(s, string_len * 2 * sizeof(char));
+					string_len *= 2;
+					if (s == 0) return 1;
+				}
+				li++;
+				s[i] = '\n';
+				i++;
+			} else {
+				s[i] = '\n';
+				i++;
+				if (i >= string_len){
+					s = (char*)realloc(s, string_len * 2 * sizeof(char));
+					string_len *= 2;
+					if (s == 0) return 1;
+				}
+				li++;
+			}
+		}
+		l = l->next;
+		li = 0;
+	}
+	s[i - 1] = '\n';
+	*sp = s;
+	*len = i;
+	return 0;
+}

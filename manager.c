@@ -31,7 +31,7 @@ int init_manager(char* file_name){
 	active_editor = 0;
 	total_editors = 1;
 	initscr();
-	cbreak();
+	raw();
 	scrollok(stdscr, FALSE);
 	curs_set(0);
 	noecho();
@@ -45,7 +45,7 @@ int init_manager(char* file_name){
 		if (file == 0){
 			status = new_blank_editor(&editors[0], col, row, 0, 0);
 			if (status) return 1;
-			fclose(file);
+			editors[0]->file_path = file_name;
 			return 0;
         }
         fseek(file, 0L, SEEK_END);
@@ -155,13 +155,31 @@ int active_editor_down(void){
 	return editor_down(editors[active_editor]);
 }
 
+int save_to_file(void){
+	if (editors[active_editor]->file_path == 0){
+		return 0;
+	}
+	int len;
+	char* stream;
+	FILE* file;
+	if (buffer_to_stream(editors[active_editor]->buffer, &stream, editors[active_editor]->line_ending, &len)) return 0;
+	file = fopen(editors[active_editor]->file_path, "wb");
+	if (!file) return 1;
+	fwrite(stream, 1, len, file);
+	fclose(file);
+	return 0;
+	free(stream);
+}
+
 int handle_keypress(int press){
-	int status;
+	int status = 0;
 	if (press == KEY_BACKSPACE) status = delete_from_active_editor();
 	else if (press == KEY_LEFT) status = active_editor_left();
 	else if (press == KEY_RIGHT) status = active_editor_right();
 	else if (press == KEY_UP) status = active_editor_up();
 	else if (press == KEY_DOWN) status = active_editor_down();
+	else if (press == 17) status = 255;
+	else if (press == 19) status = save_to_file();
 	else if (press < 256) status = insert_into_active_editor((char)press);
 	return status;
 }

@@ -10,8 +10,12 @@ int main(int argc, char** argv){
 	} else {
 		status = init_manager(0);
 	}
-	if (status) return status;
-	while (pressed != 'q'){
+	if (status){
+		endwin();
+		printf("%d\n", status);
+		return status;
+	}
+	while (1){
 		draw_editor(0);
 		pressed = getch();
 		status = handle_keypress(pressed);
