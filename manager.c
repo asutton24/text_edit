@@ -41,7 +41,6 @@ int init_manager(char* file_name){
 		status = new_blank_editor(&editors[0], col, row, 0, 0);
 		if (status) return 1;
 	} else {
-		editors[0]->file_path = file_name;
 		file = fopen(file_name, "rb");
 		if (file == 0){
 			status = new_blank_editor(&editors[0], col, row, 0, 0);
@@ -52,12 +51,15 @@ int init_manager(char* file_name){
         fseek(file, 0L, SEEK_END);
 		sz = ftell(file);
 		stream = (char*)malloc(sz + 1);
+		if (stream == 0) return 1;
 		rewind(file);
 		fread(stream, 1, sz, file);
 		stream[sz] = 0;
 		fclose(file);
 		status = new_editor(&editors[0], col, row, 0, 0, stream);
+		free(stream);
 		if (status) return 1;
+		editors[0]->file_path = file_name;
 	}
 	for (int i = 1; i < 16; i++){
 		editors[i] = 0;

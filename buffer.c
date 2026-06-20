@@ -185,17 +185,21 @@ int stream_to_buffer(buffer_t* b, char* s, char* endings){
 			*endings = 'w';
 			l->chars[li] = '\n';
 			if (new_line(&l->next)) return 1;
-			l->len = li;
+			l->len = li + 1;
+			l->next->prev = l;
 			l = l->next;
 			li = 0;
 			i += 2;
+			b->len++;
 		} else if (s[i] == '\n'){
 			l->chars[li] = '\n';
 			if (new_line(&l->next)) return 1;
-			l->len = li;
+			l->len = li + 1;
+			l->next->prev = l;
 			l = l->next;
 			li = 0;
 			i++;
+			b->len++;
 		} else if (s[i] == '\t'){
 			do {
 				l->chars[li] = '\t';
@@ -215,8 +219,9 @@ int stream_to_buffer(buffer_t* b, char* s, char* endings){
 				l->buf_len *= 2;
 				if (l->chars == 0) return 1;
 			}
+			i++;
 		}
 	}
-	l->len = li;
+	l->len = li + 1;
 	return 0;
 }
