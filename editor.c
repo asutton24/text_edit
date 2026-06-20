@@ -2,7 +2,8 @@
 #include "editor.h"
 #include "buffer.h"
 
-static int retab(line_t* l, int insert, int split){
+static int retab(line_t* l, int split){
+	int insert = 0;
 	char* new = (char*)malloc(sizeof(char)  * l->buf_len);
 	char* old = l->chars;
 	char skiptab = 0;
@@ -75,8 +76,7 @@ int editor_insert(editor_t* e, char new_c){
 	}
 	if (new_c == '\t' && e->cur_x % 8 != 0) editor_insert(e, '\t');
 	if (status = get_line(e->buffer, e->cur_y, &l)) return status;
-	if (new_c != '\t') retab(l, new_c != '\n', -1);
-	else retab(l, e->cur_x % 8 != 0, -1);
+	retab(l, e->cur_x);
 	return 0;
 }
 
@@ -101,7 +101,7 @@ int editor_delete(editor_t* e){
 	if (ny < e->scroll_y) e->scroll_y--;
 	if (deleted == '\t' && l->chars[e->cur_x - 1] == '\t' && e->cur_x % 8 != 0) editor_delete(e);
 	if (status = get_line(e->buffer, e->cur_y, &l)) return status;
-	retab(l, 0, e->cur_x);
+	retab(l, e->cur_x);
 	return 0;
 }
 
