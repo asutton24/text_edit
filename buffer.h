@@ -22,5 +22,6 @@ int free_buffer(buffer_t* b);
 int replace_char(buffer_t* b, int line, int pos, char new_c);
 int insert_char(buffer_t* b, int line, int pos, char new_c);
 int delete_char(buffer_t* b, int line, int pos);
+int stream_to_buffer(buffer_t* b, char* s, char* endings);
 
 #endif

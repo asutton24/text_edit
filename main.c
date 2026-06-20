@@ -3,7 +3,11 @@
 #include "manager.h"
 
 int main(int argc, char** argv){
-	init_manager(0);
+	if (argc == 2){
+		init_manager(argv[1]);
+	} else {
+		init_manager(0);
+	}
 	int pressed = 'x';
 	int status = 0;
 	while (pressed != 'q'){

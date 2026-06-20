@@ -174,3 +174,49 @@ int delete_char(buffer_t* b, int line, int pos){
 	return 0;
 }
 
+int stream_to_buffer(buffer_t* b, char* s, char* endings){
+	line_t* l;
+	int i = 0;
+	int li = 0;
+	*endings = 'u';
+	l = b->first;
+	while (s[i] != 0){
+		if (s[i] == '\r' && s[i+1] == '\n'){
+			*endings = 'w';
+			l->chars[li] = '\n';
+			if (new_line(&l->next)) return 1;
+			l->len = li;
+			l = l->next;
+			li = 0;
+			i += 2;
+		} else if (s[i] == '\n'){
+			l->chars[li] = '\n';
+			if (new_line(&l->next)) return 1;
+			l->len = li;
+			l = l->next;
+			li = 0;
+			i++;
+		} else if (s[i] == '\t'){
+			do {
+				l->chars[li] = '\t';
+				li++;
+				if (li >= l->buf_len){
+					l->chars = (char*)realloc(l->chars, l->buf_len * 2 * sizeof(char));
+					l->buf_len *= 2;
+					if (l->chars == 0) return 1;
+				}
+			} while (li % 8 != 0);
+			i++;
+		} else {
+			l->chars[li] = s[i];
+			li++;
+			if (li >= l->buf_len){
+				l->chars = (char*)realloc(l->chars, l->buf_len * 2 * sizeof(char));
+				l->buf_len *= 2;
+				if (l->chars == 0) return 1;
+			}
+		}
+	}
+	l->len = li;
+	return 0;
+}

@@ -62,6 +62,13 @@ int new_blank_editor(editor_t** ep, int screen_x, int screen_y, int pos_x, int p
 	return 0;
 }
 
+int new_editor(editor_t** ep, int screen_x, int screen_y, int pos_x, int pos_y, char* stream){
+	if (new_blank_editor(ep, screen_x, screen_y, pos_x, pos_y)) return 1;
+	editor_t* e = *ep;
+	if (stream_to_buffer(e->buffer, stream, &(e->line_ending))) return 1;
+	return 0;
+}
+
 int editor_insert(editor_t* e, char new_c){
 	int status = insert_char(e->buffer, e->cur_y, e->cur_x, new_c);
 	if (status) return status;

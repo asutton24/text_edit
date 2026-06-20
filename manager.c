@@ -1,5 +1,7 @@
 #include <ncurses.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "manager.h"
 #include "editor.h"
 
@@ -23,6 +25,9 @@ static int find_new_line(char* s){
 
 int init_manager(char* file_name){
 	int row, col, status;
+	char* stream;
+	FILE* file;
+	int sz;
 	active_editor = 0;
 	total_editors = 1;
 	initscr();
@@ -36,7 +41,23 @@ int init_manager(char* file_name){
 		status = new_blank_editor(&editors[0], col, row, 0, 0);
 		if (status) return 1;
 	} else {
-		return 1;
+		editors[0]->file_path = file_name;
+		file = fopen(file_name, "rb");
+		if (file == 0){
+			status = new_blank_editor(&editors[0], col, row, 0, 0);
+			if (status) return 1;
+			fclose(file);
+			return 0;
+        }
+        fseek(file, 0L, SEEK_END);
+		sz = ftell(file);
+		stream = (char*)malloc(sz + 1);
+		rewind(file);
+		fread(stream, 1, sz, file);
+		stream[sz] = 0;
+		fclose(file);
+		status = new_editor(&editors[0], col, row, 0, 0, stream);
+		if (status) return 1;
 	}
 	for (int i = 1; i < 16; i++){
 		editors[i] = 0;
