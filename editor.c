@@ -124,7 +124,7 @@ int editor_left(editor_t* e){
 	int status = get_line(e->buffer, e->cur_y, &l);
 	if (status) return status;
 	e->cur_x--;
-	if (e->cur_x <= e->scroll_x) e->scroll_x --;
+	if (e->cur_x < e->scroll_x) e->scroll_x --;
 	if (e->cur_x != 0 && l->chars[e->cur_x - 1] == '\t' && e->cur_x % 8 != 0) return editor_left(e);
 	return 0;
 }
@@ -149,6 +149,7 @@ int editor_up(editor_t* e){
 	if (status) return status;
 	if (e->cur_x > l->len - 1){
 		e->cur_x = l->len - 1;
+		if (e->cur_x < e->scroll_x) e->scroll_x = e->cur_x;
 	}
 	if (e->cur_x != 0 && l->chars[e->cur_x] == '\t' && l->chars[e->cur_x - 1] == '\t' && e->cur_x % 8 != 0) return editor_left(e);
 	return 0;
@@ -163,6 +164,7 @@ int editor_down(editor_t* e){
 	if (status) return status;
 	if (e->cur_x > l->len - 1){
 		e->cur_x = l->len - 1;
+		if (e->cur_x < e->scroll_x) e->scroll_x = e->cur_x;
 	}
 	if (e->cur_x != 0 && l->chars[e->cur_x] == '\t' && l->chars[e->cur_x - 1] == '\t' && e->cur_x % 8 != 0) return editor_left(e);
 	return 0;

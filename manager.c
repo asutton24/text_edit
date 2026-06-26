@@ -4,11 +4,13 @@
 #include <stdlib.h>
 #include "manager.h"
 #include "editor.h"
+#include "dialog.h"
 
 editor_t* editors[16];
 int screen_map[16];
 int active_editor;
 int total_editors;
+dialog_t dialog;
 
 static char char_translate(char c){
 	if (c == '\t' || c == '\n') return ' ';
@@ -30,6 +32,7 @@ int init_manager(char* file_name){
 	int sz;
 	active_editor = 0;
 	total_editors = 1;
+	dialog.active = 0;
 	initscr();
 	raw();
 	scrollok(stdscr, FALSE);
@@ -78,7 +81,6 @@ int close_manager(void){
 }
 
 int draw_editor(int index){
-	clear();
 	int status;
 	editor_t* e = editors[index];
 	if (e == 0) return 1;
@@ -127,8 +129,52 @@ int draw_editor(int index){
 		l = l->next;
 		rel_y++;	
 	}
-	refresh();
 	return 0;
+}
+
+int draw_dialog(void){
+	if (!dialog.active) return 0;
+	move(dialog.pos_y, dialog.pos_x); 
+	attron(A_REVERSE);
+	int j = 0;
+	for (int i = 0; i < dialog.scr_x; i++){
+		if (dialog.prompt[j] != 0){
+			printw("%c", dialog.prompt[j]);
+			j++;
+		} else {
+			printw(" ");
+		}
+	} 
+	move(dialog.pos_y + 1, dialog.pos_x);
+	printw(" ");
+	attroff(A_REVERSE);
+	for (int i = 0; i < dialog.scr_x - 2; i++){
+		if (dialog.scroll + i < dialog.len){
+			if (dialog.scroll + i == dialog.index) attron(A_REVERSE);
+			printw("%c", dialog.resp[dialog.scroll + i]);
+			if (dialog.scroll + i == dialog.index) attroff(A_REVERSE);
+		} else {
+			if (dialog.scroll + i == dialog.index) attron(A_REVERSE);
+			printw(" ");
+			if (dialog.scroll + i == dialog.index) attroff(A_REVERSE);
+		}
+	}
+	attron(A_REVERSE);
+	printw(" ");
+	move(dialog.pos_y + 2, dialog.pos_x);
+	for (int i = 0; i < dialog.scr_x; i++){
+		printw(" ");
+	} 
+	attroff(A_REVERSE);
+}
+
+int draw_editors(void){
+	clear();
+	for (int i = 0; i < 16; i++){
+		draw_editor(i);
+	}
+	draw_dialog();
+	refresh();
 }
 
 int insert_into_active_editor(char new_c){
@@ -155,9 +201,31 @@ int active_editor_down(void){
 	return editor_down(editors[active_editor]);
 }
 
+int dialog_keypress(int press){
+	int status = 0;
+	if (press == KEY_BACKSPACE) status = dialog_delete(&dialog);
+	else if (press == KEY_LEFT) status = dialog_left(&dialog);
+	else if (press == KEY_RIGHT) status = dialog_right(&dialog);
+	else if (press == '\n') {
+		dialog_finalize(&dialog);
+		status = 64;
+	} else if (press >= 32 && press < 256) dialog_insert(&dialog, (char)press);
+	return status;
+}
+
 int save_to_file(void){
 	if (editors[active_editor]->file_path == 0){
-		return 0;
+		int row, col, status;
+		getmaxyx(stdscr, row, col);
+		dialog_init(&dialog, 2, row / 2 - 1, col - 2, "Enter file name :");
+		do {
+			draw_editors();
+		} while (!(status = dialog_keypress(getch())));
+		if (status != 64) return 1;
+		editors[active_editor]->file_path = (char*)malloc(sizeof(char) * dialog.len);
+		for (int i = 0; i < dialog.len; i++){
+			editors[active_editor]->file_path[i] = dialog.resp[i];
+		} 
 	}
 	int len;
 	char* stream;
@@ -167,8 +235,8 @@ int save_to_file(void){
 	if (!file) return 1;
 	fwrite(stream, 1, len, file);
 	fclose(file);
-	return 0;
 	free(stream);
+	return 0;
 }
 
 int handle_keypress(int press){
@@ -183,3 +251,5 @@ int handle_keypress(int press){
 	else if (press < 256) status = insert_into_active_editor((char)press);
 	return status;
 }
+
+
