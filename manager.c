@@ -218,7 +218,8 @@ int dialog_keypress(int press){
 	else if (press == '\n') {
 		dialog_finalize(&dialog);
 		status = 64;
-	} else if (press >= 32 && press < 256) dialog_insert(&dialog, (char)press);
+	} else if (press == 17) status = 32; 
+	else if (press >= 32 && press < 256) dialog_insert(&dialog, (char)press);
 	return status;
 }
 
@@ -229,13 +230,16 @@ int new_dialog(char* prompt){
 	do {
 		draw_editors();
 	} while (!(status = dialog_keypress(getch())));
+	if (status == 32) return 32;
 	if (status != 64) return 1;
 	return 0;
 }
 
 int save_to_file(void){
+	int status;
 	if (editors[active_editor]->file_path[0] == 0){
-		if (new_dialog("Enter file name :")) return 1;
+		status = new_dialog("Enter file name :");
+		if (status) return status != 32;
 		for (int i = 0; i < dialog.len; i++){
 			editors[active_editor]->file_path[i] = dialog.resp[i];
 		} 
@@ -257,8 +261,10 @@ int quit_dialog(void){
 	if (!edited) return 255;
 	dialog.resp[0] = 'a';
 	dialog.resp[1] = 'a';
+	int status;
 	do {
-		new_dialog("Save Buffer? (y/n)");
+		status = new_dialog("Save Buffer? (y/n)");
+		if (status) return status != 32;
 		if (dialog.resp[0] < 0x61) dialog.resp[0] += 0x20;
 	} while ((dialog.resp[0] != 'y' || dialog.resp[0] != 'n') && dialog.resp[1] != 0);
 	if (dialog.resp[0] == 'y') save_to_file();
