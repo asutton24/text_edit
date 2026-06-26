@@ -48,7 +48,10 @@ int init_manager(char* file_name){
 		if (file == 0){
 			status = new_blank_editor(&editors[0], col, row, 0, 0);
 			if (status) return 1;
-			editors[0]->file_path = file_name;
+			for (int i = 0; i < 1024; i++){
+				editors[0]->file_path[i] = file_name[i];
+				if (file_name[i] == 0) break;
+			}
 			return 0;
         }
         fseek(file, 0L, SEEK_END);
@@ -62,7 +65,10 @@ int init_manager(char* file_name){
 		status = new_editor(&editors[0], col, row, 0, 0, stream);
 		free(stream);
 		if (status) return 1;
-		editors[0]->file_path = file_name;
+		for (int i = 0; i < 1024; i++){
+			editors[0]->file_path[i] = file_name[i];
+			if (file_name[i] == 0) break;
+		}
 	}
 	for (int i = 1; i < 16; i++){
 		editors[i] = 0;
@@ -88,7 +94,7 @@ int draw_editor(int index){
 	int rel_y = e->pos_y + 1;
 	move(e->pos_y, e->pos_x);
 	int header_len;
-	if (e->file_path == 0) header_len = 0;
+	if (e->file_path[0] == 0) header_len = 0;
 	else header_len = strlen(e->file_path);
 	attron(A_REVERSE);
 	for (int i = 0; (i < header_len) && (i < e->screen_x); i++){
@@ -214,7 +220,7 @@ int dialog_keypress(int press){
 }
 
 int save_to_file(void){
-	if (editors[active_editor]->file_path == 0){
+	if (editors[active_editor]->file_path[0] == 0){
 		int row, col, status;
 		getmaxyx(stdscr, row, col);
 		dialog_init(&dialog, 2, row / 2 - 1, col - 2, "Enter file name :");
@@ -222,7 +228,6 @@ int save_to_file(void){
 			draw_editors();
 		} while (!(status = dialog_keypress(getch())));
 		if (status != 64) return 1;
-		editors[active_editor]->file_path = (char*)malloc(sizeof(char) * dialog.len);
 		for (int i = 0; i < dialog.len; i++){
 			editors[active_editor]->file_path[i] = dialog.resp[i];
 		} 

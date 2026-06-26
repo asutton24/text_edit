@@ -13,7 +13,7 @@ typedef struct {
 	int scroll_y;
 	int cur_x;
 	int cur_y;
-	char* file_path;
+	char file_path[1024];
 	char* clip;
 	char line_ending;
 	int mode;

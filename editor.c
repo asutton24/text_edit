@@ -50,7 +50,7 @@ int new_blank_editor(editor_t** ep, int screen_x, int screen_y, int pos_x, int p
 	e->scroll_y = 1;
 	e->cur_x = 0;
 	e->cur_y = 1;
-	e->file_path = 0;
+	e->file_path[0] = 0;
 	e->clip = 0;
 	#ifdef _WIN32
 	e->line_ending = 'w';
