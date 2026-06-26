@@ -11,6 +11,7 @@ int screen_map[16];
 int active_editor;
 int total_editors;
 dialog_t dialog;
+int edited = 0;
 
 static char char_translate(char c){
 	if (c == '\t' || c == '\n') return ' ';
@@ -184,10 +185,12 @@ int draw_editors(void){
 }
 
 int insert_into_active_editor(char new_c){
+	edited = 1;
 	return editor_insert(editors[active_editor], new_c);
 }
 
 int delete_from_active_editor(void){
+	edited = 1;
 	return editor_delete(editors[active_editor]);
 }
 
@@ -219,15 +222,20 @@ int dialog_keypress(int press){
 	return status;
 }
 
+int new_dialog(char* prompt){
+	int row, col, status;
+	getmaxyx(stdscr, row, col);
+	dialog_init(&dialog, 2, row / 2 - 1, col - 2, prompt);
+	do {
+		draw_editors();
+	} while (!(status = dialog_keypress(getch())));
+	if (status != 64) return 1;
+	return 0;
+}
+
 int save_to_file(void){
 	if (editors[active_editor]->file_path[0] == 0){
-		int row, col, status;
-		getmaxyx(stdscr, row, col);
-		dialog_init(&dialog, 2, row / 2 - 1, col - 2, "Enter file name :");
-		do {
-			draw_editors();
-		} while (!(status = dialog_keypress(getch())));
-		if (status != 64) return 1;
+		if (new_dialog("Enter file name :")) return 1;
 		for (int i = 0; i < dialog.len; i++){
 			editors[active_editor]->file_path[i] = dialog.resp[i];
 		} 
@@ -235,13 +243,26 @@ int save_to_file(void){
 	int len;
 	char* stream;
 	FILE* file;
-	if (buffer_to_stream(editors[active_editor]->buffer, &stream, editors[active_editor]->line_ending, &len)) return 0;
+	if (buffer_to_stream(editors[active_editor]->buffer, &stream, editors[active_editor]->line_ending, &len)) return 1;
 	file = fopen(editors[active_editor]->file_path, "wb");
 	if (!file) return 1;
 	fwrite(stream, 1, len, file);
 	fclose(file);
 	free(stream);
+	edited = 0;
 	return 0;
+}
+
+int quit_dialog(void){
+	if (!edited) return 255;
+	dialog.resp[0] = 'a';
+	dialog.resp[1] = 'a';
+	do {
+		new_dialog("Save Buffer? (y/n)");
+		if (dialog.resp[0] < 0x61) dialog.resp[0] += 0x20;
+	} while ((dialog.resp[0] != 'y' || dialog.resp[0] != 'n') && dialog.resp[1] != 0);
+	if (dialog.resp[0] == 'y') save_to_file();
+	return 255;
 }
 
 int handle_keypress(int press){
@@ -251,7 +272,7 @@ int handle_keypress(int press){
 	else if (press == KEY_RIGHT) status = active_editor_right();
 	else if (press == KEY_UP) status = active_editor_up();
 	else if (press == KEY_DOWN) status = active_editor_down();
-	else if (press == 17) status = 255;
+	else if (press == 17) status = quit_dialog();
 	else if (press == 19) status = save_to_file();
 	else if (press < 256) status = insert_into_active_editor((char)press);
 	return status;
