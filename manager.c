@@ -11,7 +11,8 @@ int screen_map[16];
 int active_editor;
 int total_editors;
 dialog_t dialog;
-int edited = 0;
+int edited[16] = {0};
+int open_editors = 0;
 
 static char char_translate(char c){
 	if (c == '\t' || c == '\n') return ' ';
@@ -73,18 +74,25 @@ int init_manager(char* file_name){
 	}
 	for (int i = 1; i < 16; i++){
 		editors[i] = 0;
+		edited[i] = 0;
 	}
+	open_editors++;
 	return 0;
 }
 
 int close_manager(void){
-	for (int i = 0; i < 16; i++){
-		if (editors[i]){
-			free_editor(editors[i]);
-		}
-	}
 	endwin();
 	return 0;
+}
+
+int close_active_editor(void){
+	open_editors--;
+	free_editor(editors[active_editor]);
+	editors[active_editor] = 0;
+	if (open_editors == 0) return 255;
+	while (editors[active_editor] == 0){
+		active_editor = (active_editor + 1) % 16;
+	}
 }
 
 int draw_editor(int index){
@@ -185,12 +193,12 @@ int draw_editors(void){
 }
 
 int insert_into_active_editor(char new_c){
-	edited = 1;
+	edited[active_editor] = 1;
 	return editor_insert(editors[active_editor], new_c);
 }
 
 int delete_from_active_editor(void){
-	edited = 1;
+	edited[active_editor] = 1;
 	return editor_delete(editors[active_editor]);
 }
 
@@ -253,12 +261,14 @@ int save_to_file(void){
 	fwrite(stream, 1, len, file);
 	fclose(file);
 	free(stream);
-	edited = 0;
+	edited[active_editor] = 0;
 	return 0;
 }
 
-int quit_dialog(void){
-	if (!edited) return 255;
+int quit_active_editor_dialog(void){
+	if (!edited[active_editor]){
+		return close_active_editor();
+	}
 	dialog.resp[0] = 'a';
 	dialog.resp[1] = 'a';
 	int status;
@@ -268,7 +278,7 @@ int quit_dialog(void){
 		if (dialog.resp[0] < 0x61) dialog.resp[0] += 0x20;
 	} while ((dialog.resp[0] != 'y' || dialog.resp[0] != 'n') && dialog.resp[1] != 0);
 	if (dialog.resp[0] == 'y') save_to_file();
-	return 255;
+	return close_active_editor();
 }
 
 int handle_keypress(int press){
@@ -278,7 +288,7 @@ int handle_keypress(int press){
 	else if (press == KEY_RIGHT) status = active_editor_right();
 	else if (press == KEY_UP) status = active_editor_up();
 	else if (press == KEY_DOWN) status = active_editor_down();
-	else if (press == 17) status = quit_dialog();
+	else if (press == 17) status = quit_active_editor_dialog();
 	else if (press == 19) status = save_to_file();
 	else if (press < 256) status = insert_into_active_editor((char)press);
 	return status;
